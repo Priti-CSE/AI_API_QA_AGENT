@@ -50,7 +50,7 @@ def update_user(user_id: int, user: User):
             existing_user["email"] = user.email
             return existing_user
 
-    return {"message": "User not found"}
+    raise HTTPException(status_code=404, detail="User not found")
 
 @app.delete("/users/{user_id}")
 def delete_user(user_id: int):
@@ -59,4 +59,4 @@ def delete_user(user_id: int):
             users.remove(user)
             return {"message": "User deleted successfully"}
 
-    return {"message": "User not found"}
+    raise HTTPException(status_code=404, detail="User not found")
