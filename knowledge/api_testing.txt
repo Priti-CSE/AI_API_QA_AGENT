@@ -1,0 +1,17 @@
+API Testing
+
+API testing checks whether an API works correctly.
+
+Common API methods:
+GET - retrieve data
+POST - create data
+PUT - update data
+DELETE - delete data
+
+API tests should check:
+- Correct status codes
+- Correct response data
+- Valid input
+- Invalid input
+- Missing required fields
+- Boundary values

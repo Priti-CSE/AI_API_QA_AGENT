@@ -1,0 +1,12 @@
+Negative API Testing
+
+Negative testing checks how an API behaves when invalid input is provided.
+
+Examples:
+- Missing required fields
+- Invalid data types
+- Invalid IDs
+- Empty values
+- Incorrect request data
+
+The API should return an appropriate error response instead of failing unexpectedly.

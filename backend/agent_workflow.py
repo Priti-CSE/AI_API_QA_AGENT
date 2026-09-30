@@ -7,6 +7,9 @@ from typing import TypedDict
 from dotenv import load_dotenv
 from groq import Groq
 
+from langchain_chroma import Chroma
+from langchain_huggingface import HuggingFaceEmbeddings
+
 from langgraph.graph import StateGraph, START, END
 
 
@@ -15,6 +18,15 @@ load_dotenv()
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 BASE_URL = "http://127.0.0.1:8001"
+
+embeddings = HuggingFaceEmbeddings(
+    model_name="sentence-transformers/all-MiniLM-L6-v2"
+)
+
+vector_store = Chroma(
+    persist_directory="chroma_db",
+    embedding_function=embeddings
+)
 
 class QAState(TypedDict):
     api_spec: dict
@@ -170,12 +182,30 @@ def analyze_results(state: QAState):
 
     results = state["test_results"]
 
+    query = "API testing status codes negative testing failures"
+
+    rag_results = vector_store.similarity_search(
+        query,
+        k=2
+    )
+
+    knowledge = ""
+
+    for result in rag_results:
+        knowledge = knowledge + result.page_content + "\n"
+
     prompt = """
 You are an API quality assurance expert.
 
-Analyze the following API test results.
+Use this API testing knowledge:
 
-Provide:
+{}
+
+Analyze these actual API test results:
+
+{}
+
+Give the following information:
 
 1. Overall test summary
 2. Number of passed tests
@@ -188,13 +218,9 @@ Provide:
 Important:
 - Use only the information provided in the test results.
 - Do not invent test results.
-- Clearly distinguish PASS, FAIL and SKIPPED tests.
+- Clearly distinguish PASS, FAIL and SKIPPED.
 - Keep the explanation simple.
-
-Test results:
-
-{}
-""".format(results)
+""".format(knowledge, results)
 
     response = client.chat.completions.create(
         model="openai/gpt-oss-20b",
@@ -213,7 +239,6 @@ Test results:
     return {
         "report": report
     }
-
 builder = StateGraph(QAState)
 
 builder.add_node("analyze_api", analyze_api)
