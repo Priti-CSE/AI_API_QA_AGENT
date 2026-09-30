@@ -1,0 +1,62 @@
+{
+    "test_cases": [
+        {
+            "name": "Get all users",
+            "method": "GET",
+            "endpoint": "/users",
+            "body": null,
+            "expected_status": 200
+        },
+        {
+            "name": "Get user by ID",
+            "method": "GET",
+            "endpoint": "/users/1",
+            "body": null,
+            "expected_status": 200
+        },
+        {
+            "name": "Create user",
+            "method": "POST",
+            "endpoint": "/users",
+            "body": {
+                "name": "Alice",
+                "email": "alice@example.com"
+            },
+            "expected_status": 200
+        },
+        {
+            "name": "Update user",
+            "method": "PUT",
+            "endpoint": "/users/1",
+            "body": {
+                "name": "Alice Updated",
+                "email": "alice.updated@example.com"
+            },
+            "expected_status": 200
+        },
+        {
+            "name": "Delete user",
+            "method": "DELETE",
+            "endpoint": "/users/1",
+            "body": null,
+            "expected_status": 200
+        },
+        {
+            "name": "Create user missing email",
+            "method": "POST",
+            "endpoint": "/users",
+            "body": {
+                "name": "Bob"
+            },
+            "expected_status": 422
+        },
+        {
+            "name": "Create user missing name",
+            "method": "POST",
+            "endpoint": "/users",
+            "body": {
+                "email": "bob@example.com"
+            }
+        }
+    ]
+}
