@@ -1,8 +1,13 @@
+import sys
+import time
+sys.stdout.reconfigure(encoding="utf-8")
+
 import os
 import json
 import requests
 
 from typing import TypedDict
+from redis_cache import save_results
 
 from dotenv import load_dotenv
 from groq import Groq
@@ -50,7 +55,6 @@ def analyze_api(state: QAState):
     return {
         "api_spec": api_spec
     }
-
 
 def generate_tests(state: QAState):
 
@@ -148,10 +152,19 @@ def execute_tests(state: QAState):
 
         url = BASE_URL + endpoint
 
+        start_time = time.perf_counter()
+
         response = requests.request(
             method=method,
             url=url,
             json=body
+        )
+
+        end_time = time.perf_counter()
+
+        response_time = round(
+            (end_time - start_time) * 1000,
+            2
         )
 
         actual_status = response.status_code
@@ -167,10 +180,15 @@ def execute_tests(state: QAState):
             "endpoint": endpoint,
             "expected": expected_status,
             "actual": actual_status,
+            "response_time": response_time,
             "result": result
         })
+        print("Test execution completed.")
 
-    print("Test execution completed.")
+    save_results(results)
+
+    with open("backend/test_results.json", "w") as file:
+            json.dump(results, file, indent=4)
 
     return {
         "test_results": results
@@ -235,6 +253,32 @@ Important:
     report = response.choices[0].message.content
 
     print("AI analysis completed.")
+
+    total = len(results)
+    passed = 0
+    failed = 0
+    skipped = 0
+
+    for result in results:
+        if result["result"] == "PASS":
+            passed += 1
+        elif result["result"] == "FAIL":
+            failed += 1
+        elif result["result"] == "SKIPPED":
+            skipped += 1
+
+    qa_report = {
+        "total_tests": total,
+        "passed": passed,
+        "failed": failed,
+        "skipped": skipped,
+        "ai_analysis": report
+    }
+
+    with open("backend/qa_report.json", "w") as file:
+        json.dump(qa_report, file, indent=4)
+
+    print("QA report created successfully.")
 
     return {
         "report": report

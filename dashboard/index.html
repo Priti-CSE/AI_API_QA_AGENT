@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI API QA Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root[data-theme=dark]{--bg:#0a0e1f;--glow1:rgba(124,92,255,.22);--glow2:rgba(34,211,238,.14);--card:rgba(255,255,255,.045);--line:rgba(255,255,255,.09);--ink:#e8ecf6;--mute:#8b95ad;--pass:#2ee6a6;--fail:#ff5d73;--a1:#7c5cff;--a2:#22d3ee;--a3:#f5b94a;--head:#0f1530}
+:root[data-theme=light]{--bg:#f2f4fb;--glow1:rgba(124,92,255,.12);--glow2:rgba(34,211,238,.12);--card:#fff;--line:#dde2f0;--ink:#141a2e;--mute:#5f6a85;--pass:#0f9d6e;--fail:#d8334a;--a1:#5b3df5;--a2:#0891b2;--a3:#d98a0b;--head:#e9edf9}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;color:var(--ink);font-family:'Space Grotesk',system-ui,sans-serif;line-height:1.5;
+background:radial-gradient(900px 500px at 10% -10%,var(--glow1),transparent),radial-gradient(800px 500px at 100% 0,var(--glow2),transparent),var(--bg);transition:background .3s,color .3s}
+.wrap{max-width:1120px;margin:0 auto;padding:28px 20px 60px}
+header{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+h1{margin:0;font-size:1.7rem;font-weight:700;letter-spacing:-.02em;background:linear-gradient(90deg,var(--a2),var(--a1));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--mute);font-size:.88rem}
+.acts{display:flex;gap:10px}
+button{font:inherit;font-weight:600;border:0;border-radius:10px;padding:10px 18px;cursor:pointer;color:#fff;background:linear-gradient(135deg,var(--a1),var(--a2));box-shadow:0 6px 22px -6px var(--a1);transition:transform .15s}
+button:hover{transform:translateY(-2px)}button:disabled{opacity:.55;cursor:wait;transform:none}
+button.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line);box-shadow:none}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--a2);outline-offset:2px}
+.banner{display:none;margin-top:16px;padding:10px 14px;border-radius:10px;background:rgba(255,200,60,.12);border:1px solid rgba(255,200,60,.4);font-size:.9rem}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;backdrop-filter:blur(10px);min-width:0}
+.card h2{margin:0 0 14px;font-size:1rem;font-weight:600;color:var(--mute)}
+.hero{display:flex;flex-direction:column;gap:22px;align-items:center;margin-top:24px;text-align:center}
+@media(max-width:700px){.hero{padding:18px 14px}}
+.ring{--p:0;width:230px;height:230px;border-radius:50%;display:grid;place-items:center;
+background:conic-gradient(var(--rc,var(--pass)) calc(var(--p)*1%),var(--line) 0);box-shadow:0 0 44px -10px var(--rc,var(--pass))}
+.ring div{width:180px;height:180px;border-radius:50%;background:var(--head);display:grid;place-content:center;text-align:center}
+.ring b{font-size:3.2rem;line-height:1}.ring span{font-size:.8rem;color:var(--mute)}
+.hero > div:last-child{width:100%;max-width:1000px}.tiles{display:grid;grid-template-columns:repeat(5,minmax(120px,1fr));gap:14px;width:100%}
+@media(max-width:900px){.tiles{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){.tiles{grid-template-columns:repeat(2,1fr)}}
+.tile{border:1px solid var(--line);border-radius:14px;padding:18px 14px;background:var(--card);min-height:88px;display:flex;flex-direction:column;justify-content:center}
+.tile b{display:block;font-size:1.9rem;line-height:1.1}.tile span{font-size:.82rem;color:var(--mute)}
+.tile.p b{color:var(--pass)}.tile.f b{color:var(--fail)}
+.bars{display:flex;gap:4px;height:46px;margin-top:16px;width:100%}
+.bars i{flex:1;max-width:20px;border-radius:4px;background:var(--pass);box-shadow:0 0 12px -2px var(--pass)}
+.bars i.f{background:var(--fail);box-shadow:0 0 12px -2px var(--fail)}
+.grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-top: 20px;
+}
+@media(max-width:860px){.grid{grid-template-columns:1fr}}
+.tools{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+input,select{font:inherit;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink)}
+select option{color:#111}input{flex:1;min-width:140px}
+.scroll{overflow-x:auto;max-height:400px}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th{text-align:left;font-weight:500;color:var(--mute);padding:8px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--head)}
+td{padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:hover td{background:rgba(124,92,255,.07)}
+.m{font-weight:700;color:var(--a2)}
+.tag{padding:3px 10px;border-radius:99px;font-size:.78rem;font-weight:600}
+.tag.p{background:rgba(46,230,166,.14);color:var(--pass)}.tag.f{background:rgba(255,93,115,.15);color:var(--fail)}
+.err{display:block;color:var(--mute);font-size:.8rem}
+.ai p{margin:0 0 10px;font-size:.93rem}.ai ul{margin:0;padding-left:18px;font-size:.9rem}.ai li{margin-bottom:8px}
+.empty{color:var(--mute)}
+.two{display:grid;grid-template-columns:1.8fr 0.8fr;gap:20px;margin-top:20px}
+@media(max-width:860px){.two{grid-template-columns:1fr}}
+.chips{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.chip{flex:1;min-width:110px;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.chip b{display:block;font-size:1.05rem}.chip span{font-size:.72rem;color:var(--mute)}
+.tl{list-style:none;margin:0;padding:0 0 0 18px;border-left:2px solid var(--line);max-height:360px;overflow-y:auto}
+.tl li{position:relative;padding:0 0 18px 18px}
+.tl li::before{content:"";position:absolute;left:-27px;top:5px;width:14px;height:14px;border-radius:50%;background:var(--c);box-shadow:0 0 12px -1px var(--c);border:3px solid var(--bg)}
+.tl .top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-weight:600}
+.tl .meta{color:var(--mute);font-size:.84rem}
+.up{color:var(--pass)}.down{color:var(--fail)}
+.reg-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.reg-head h2{margin:0}
+.pills{display:flex;gap:8px;flex-wrap:wrap}
+button.pill{background:var(--card);color:var(--ink);border:1px solid var(--line);box-shadow:none;padding:7px 14px;border-radius:99px;font-size:.88rem}
+button.pill b{margin-left:6px}
+button.pill.on{border-color:var(--c);box-shadow:0 0 16px -4px var(--c)}
+button.pill.on b{color:var(--c)}
+.rl{display:grid;gap:10px}
+.ri{border:1px solid var(--line);border-left:4px solid var(--c);border-radius:12px;padding:12px 14px;display:grid;grid-template-columns:1fr auto;gap:6px 16px}
+.ri .t{font-weight:600}.ri .t i{font-style:normal;color:var(--a2);margin-right:8px}
+.ri .e{grid-column:1;color:var(--mute);font-size:.84rem}
+.ri .d{grid-row:1/3;grid-column:2;text-align:right;font-size:.88rem}
+.ri .d div{white-space:nowrap}.ri .meta{color:var(--mute);font-size:.82rem}
+.ok{padding:14px;border-radius:12px;background:rgba(46,230,166,.1);color:var(--pass);font-weight:600}
+@media(max-width:600px){.ri{grid-template-columns:1fr}.ri .d{grid-row:auto;grid-column:1;text-align:left}}
+.pipe{display:flex;gap:8px;margin:18px 0 0;padding:0;list-style:none;flex-wrap:wrap}
+.pipe li{flex:1;min-width:110px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;font-size:.85rem;color:var(--mute);background:var(--card)}
+.pipe li.done{color:var(--pass);border-color:var(--pass)}
+.pipe li.act{color:var(--a2);border-color:var(--a2);animation:pl .9s infinite alternate}
+@keyframes pl{to{box-shadow:0 0 18px -2px var(--a2)}}
+tr.clk{cursor:pointer}
+dialog{width:min(560px,92vw);background:var(--head);color:var(--ink);border:1px solid var(--line);border-radius:18px;padding:22px}
+dialog::backdrop{background:rgba(0,0,0,.6);backdrop-filter:blur(3px)}
+dialog h3{margin:0 0 8px}dialog h4{margin:16px 0 6px;color:var(--mute);font-size:.85rem;font-weight:600}
+dialog pre{margin:0;padding:10px;border-radius:10px;background:rgba(127,127,127,.12);overflow:auto;font-size:.8rem}
+dialog .row{display:flex;gap:14px;flex-wrap:wrap;font-size:.88rem;color:var(--mute)}
+.gbadge{display:inline-block;margin-top:16px;padding:5px 14px;border-radius:99px;border:1px solid currentColor;font-weight:600;font-size:.85rem}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div><h1>AI API QA Dashboard</h1><div class="sub" id="updated">Loading results...</div></div>
+    <div class="acts">
+      <button class="ghost" id="expBtn">Export CSV</button>
+      <button class="ghost" id="themeBtn" aria-label="Toggle night mode">Light mode</button>
+      <button id="runBtn">Run tests</button>
+    </div>
+  </header>
+  <div class="banner" id="banner"></div>
+  <ol class="pipe" id="pipe" hidden></ol>
+
+  <section class="card hero">
+    <div style="text-align:center"><div class="ring" id="ring" title="Health score = pass rate minus 3 points per regression"><div><b id="sGrade" style="font-size:2.6rem">0</b><span>out of 100</span></div></div><div class="gbadge" id="gBadge">Grade</div></div>
+    <div style="width:100%">
+      <div class="tiles">
+        <div class="tile"><b id="sRate">0%</b><span>Pass rate</span></div>
+        <div class="tile"><b id="sTotal">0</b><span>Total tests</span></div>
+        <div class="tile p"><b id="sPass">0</b><span>Passed</span></div>
+        <div class="tile f"><b id="sFail">0</b><span>Failed</span></div>
+        <div class="tile"><b id="sAvg">0</b><span>Avg response (ms)</span></div>
+      </div>
+      <div class="bars" id="bars" aria-label="One bar per test"></div>
+    </div>
+  </section>
+
+  <section class="card" style="margin-top:20px">
+    <div class="reg-head">
+      <div><h2>Regression check</h2><div class="sub" id="regSub">Comparing the latest run with the previous one</div></div>
+      <div class="pills" id="regPills"></div>
+    </div>
+    <div class="rl" id="regList"></div>
+  </section>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Test results</h2>
+      <div class="tools">
+        <input id="q" type="search" placeholder="Search by endpoint" aria-label="Search by endpoint">
+        <select id="flt" aria-label="Filter"><option value="all">All results</option><option value="pass">Passed</option><option value="fail">Failed</option></select>
+      </div>
+      <div class="scroll"><table>
+        <thead><tr><th>Method</th><th>Endpoint</th><th>Status</th><th>Time</th><th>Result</th></tr></thead>
+        <tbody id="rows"></tbody></table></div>
+      <div class="empty" id="empty" hidden>No tests match this filter.</div>
+    </section>
+    <section class="card ai">
+      <h2>AI analysis</h2>
+      <div id="analysis"><div class="empty">No analysis yet. Run the tests to generate one.</div></div>
+    </section>
+  </div>
+
+  <div class="two">
+    <section class="card">
+      <h2>Pass rate over time</h2>
+      <canvas id="trend" height="100"></canvas>
+    </section>
+    <section class="card">
+      <h2>Test type breakdown</h2>
+      <canvas id="types" height="100"></canvas>
+      <div class="chips" id="chips"></div>
+    </section>
+  </div>
+
+
+</div>
+
+<dialog id="dlg"></dialog>
+<script>
+const API = "http://127.0.0.1:8000";  
+
+const SAMPLE = [
+  {endpoint:"/users",method:"GET",status_code:200,response_time:112,passed:true,test_type:"positive",source:"rule"},
+  {endpoint:"/users",method:"POST",status_code:201,response_time:180,passed:true,test_type:"positive",source:"ai"},
+  {endpoint:"/users/{id}",method:"GET",status_code:200,response_time:95,passed:true,test_type:"edge",source:"ai"},
+  {endpoint:"/users/{id}",method:"DELETE",status_code:500,response_time:640,passed:false,error:"Expected 204, got 500",test_type:"negative",source:"ai",ai_explanation:"The server crashed instead of returning 204. Deleting a user that has linked records probably triggers an unhandled exception.",request:{method:"DELETE",url:"/users/42"},response:{status:500,body:"Internal Server Error"}},
+  {endpoint:"/orders",method:"POST",status_code:422,response_time:210,passed:false,error:"Missing required field: items",test_type:"negative",source:"rule",ai_explanation:"The request body was rejected as invalid. Check whether the schema marks items as required while the generated payload omitted it.",request:{method:"POST",url:"/orders",body:{customer:7}},response:{status:422,body:{detail:"items is required"}}},
+  {endpoint:"/orders",method:"GET",status_code:200,response_time:130,passed:true,test_type:"edge",source:"rule"}
+];
+const SAMPLE_AI = {summary:"2 of 6 tests failed. Both failures involve write operations.",
+  issues:["DELETE /users/{id} returns 500: check null handling for missing users.","POST /orders rejects valid payloads: review the request schema."]};
+
+const SAMPLE_HISTORY = [
+  {run_id:1,timestamp:"2026-09-28T10:15:00",duration:42,total:6,passed:3},
+  {run_id:2,timestamp:"2026-09-29T11:02:00",duration:45,total:6,passed:4},
+  {run_id:3,timestamp:"2026-10-01T09:40:00",duration:39,total:6,passed:4},
+  {run_id:4,timestamp:"2026-10-03T08:20:00",duration:41,total:6,passed:4}
+];
+const SAMPLE_REG = {current_run:4, previous_run:3,
+  regressions:[
+    {method:"DELETE",endpoint:"/users/{id}",error:"Expected 204, got 500",prev_status:204,status_code:500,prev_time:88,response_time:640},
+    {method:"POST",endpoint:"/orders",error:"Missing required field: items",prev_status:201,status_code:422,prev_time:170,response_time:210}],
+  fixed:[{method:"GET",endpoint:"/users/{id}",prev_status:404,status_code:200,prev_time:300,response_time:95}],
+  still_failing:[]};
+const KINDS = ["positive","negative","edge"];
+let data = [], history = [], charts = {}, reg = null, regTab = "regressions";
+const $ = id => document.getElementById(id);
+const norm = r => ({
+  endpoint: r.endpoint || r.url || r.name || "-",
+  method: (r.method || "GET").toUpperCase(),
+  status: r.status_code ?? r.status ?? "-",
+  time: r.response_time ?? r.time ?? r.duration ?? null,
+  pass: r.passed !== undefined ? !!r.passed : String(r.result || "").toLowerCase().startsWith("pass"),
+  msg: r.error || r.message || "",
+  type: String(r.test_type || r.type || "positive").toLowerCase(),
+  src: String(r.source || r.generator || "rule").toLowerCase().includes("ai") ? "AI-generated" : "Rule-based",
+  expl: r.ai_explanation || r.explanation || "", req: r.request || null, res: r.response || null
+});
+async function getJSON(path, opts){
+  const res = await fetch(API + path, opts);
+  if(!res.ok) throw new Error(res.status);
+  return res.json();
+}
+
+// Theme: night mode by default, remembered between visits
+function setTheme(t){
+  document.documentElement.dataset.theme = t;
+  $("themeBtn").textContent = t === "dark" ? "Light mode" : "Night mode";
+  try{ localStorage.setItem("qa-theme", t); }catch(e){}
+  if(data.length) renderCharts();
+}
+let saved = "dark"; try{ saved = localStorage.getItem("qa-theme") || "dark"; }catch(e){}
+$("themeBtn").addEventListener("click", () => setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
+
+async function load(){
+
+  let analysis = null;
+
+  try{
+
+    const r = await getJSON("/results");
+
+    data = (
+      Array.isArray(r)
+        ? r
+        : r.results || r.tests || []
+    ).map(norm);
+
+
+    /* AI ANALYSIS */
+
+    try{
+      analysis = await getJSON("/analysis");
+    }catch(e){
+      analysis = null;
+    }
+
+
+    /* RUN HISTORY */
+
+    try{
+      const h = await getJSON("/history");
+
+      history = Array.isArray(h)
+        ? h
+        : (h.runs || []);
+
+    }catch(e){
+      history = [];
+    }
+
+
+    /* REGRESSION DATA */
+
+    try{
+      reg = await getJSON("/regressions");
+    }catch(e){
+      reg = null;
+    }
+
+
+    $("banner").style.display = "none";
+
+  }catch(e){
+
+    data = SAMPLE.map(norm);
+
+    analysis = SAMPLE_AI;
+
+    history = SAMPLE_HISTORY;
+
+    reg = SAMPLE_REG;
+
+    $("banner").style.display = "block";
+
+    $("banner").textContent =
+      "Backend not reachable at " + API +
+      ". Showing sample data.";
+  }
+
+
+  render();
+
+  renderAnalysis(analysis);
+
+  $("updated").textContent =
+    "Last updated " + new Date().toLocaleString();
+}
+
+function countUp(el, to, suffix=""){
+  const t0 = performance.now();
+  (function step(t){
+    const k = Math.min((t - t0) / 700, 1);
+    el.textContent = Math.round(to * k) + suffix;
+    if(k < 1) requestAnimationFrame(step);
+  })(t0);
+}
+
+function render(){
+  const total = data.length, pass = data.filter(d=>d.pass).length;
+  const rate = total ? Math.round(pass/total*100) : 0;
+  const times = data.map(d=>d.time).filter(t=>t!=null);
+  countUp($("sTotal"), total); countUp($("sPass"), pass); countUp($("sFail"), total - pass);
+  const rc = ((reg && reg.regressions) || []).length, score = Math.max(0, rate - rc*3);
+  countUp($("sRate"), rate, "%"); countUp($("sGrade"), score);
+  const g = !total ? ["-","No data","var(--mute)"] : score>=90 ? ["A","Excellent","var(--pass)"] : score>=75 ? ["B","Good","var(--pass)"]
+    : score>=60 ? ["C","Needs attention","var(--a3)"] : score>=40 ? ["D","Poor","var(--a3)"] : ["F","Critical","var(--fail)"];
+  $("ring").style.setProperty("--rc", g[2]);
+  $("gBadge").textContent = "Grade " + g[0] + " \u00b7 " + g[1]; $("gBadge").style.color = g[2];
+  $("sAvg").textContent = times.length ? Math.round(times.reduce((a,b)=>a+b,0)/times.length) : "n/a";
+  $("ring").style.setProperty("--p", score);
+  $("bars").innerHTML = data.map(d=>`<i class="${d.pass?"":"f"}" title="${d.method} ${d.endpoint}: ${d.pass?"passed":"failed"}"></i>`).join("");
+  renderTable(); renderCharts(); renderTimeline(); renderRegressions();
+}
+
+function renderTable(){
+  const q = $("q").value.toLowerCase(), f = $("flt").value;
+  const regKeys = new Set(((reg && reg.regressions) || []).map(x => (x.method||"GET").toUpperCase() + " " + (x.endpoint||x.url||x.name)));
+  const list = data.filter(d => d.endpoint.toLowerCase().includes(q) && (f==="all" || (f==="pass") === d.pass));
+  $("rows").innerHTML = list.map(d=>`<tr class="clk" data-i="${data.indexOf(d)}">
+    <td class="m">${d.method}</td>
+    <td>${d.endpoint}${regKeys.has(d.method+" "+d.endpoint)?' <span class="tag f">Regression</span>':""}${d.msg?`<span class="err">${d.msg}</span>`:""}</td>
+    <td>${d.status}</td><td>${d.time!=null?d.time+" ms":"-"}</td>
+    <td><span class="tag ${d.pass?"p":"f"}">${d.pass?"Passed":"Failed"}</span></td></tr>`).join("");
+  $("empty").hidden = list.length > 0;
+}
+
+function renderCharts(){
+  const css = getComputedStyle(document.documentElement);
+  const v = n => css.getPropertyValue(n).trim();
+  const mute = v("--mute"), line = v("--line");
+  Object.values(charts).forEach(c => c.destroy());
+
+  // Pass rate trend
+  const runs = history.map(function(h, index) {
+
+    return {
+        label: "Run " + (h.run_number || (index + 1)),
+
+        rate: h.pass_rate != null
+            ? Math.round(h.pass_rate)
+            : (
+                h.total
+                    ? Math.round((h.passed / h.total) * 100)
+                    : 0
+            )
+    };
+
+});
+  const tctx = $("trend").getContext("2d");
+
+    if (charts.trend) {
+        charts.trend.destroy();
+    }
+
+    const g = tctx.createLinearGradient(0, 0, 0, 260);
+    g.addColorStop(0, v("--a2") + "66");
+    g.addColorStop(1, "transparent");
+
+    charts.trend = new Chart(tctx, {
+        type: "line",
+
+        data: {
+            labels: runs.map(function(r) {
+                return r.label;
+            }),
+
+            datasets: [{
+                label: "Pass Rate",
+                data: runs.map(function(r) {
+                    return r.rate;
+                }),
+                borderColor: v("--a2"),
+                backgroundColor: g,
+                fill: true,
+                tension: 0.35,
+                pointRadius: 4,
+                pointBackgroundColor: v("--a1")
+            }]
+        },
+
+        options: {
+            responsive: true,
+
+            plugins: {
+                legend: {
+                    display: false
+                },
+
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return "Pass Rate: " + context.parsed.y + "%";
+                        }
+                    }
+                }
+            },
+
+            scales: {
+                x: {
+                    ticks: {
+                        color: mute
+                    },
+                    grid: {
+                        display: false
+                    }
+                },
+
+                y: {
+                    min: 0,
+                    max: 100,
+
+                    ticks: {
+                        color: mute,
+                        callback: function(value) {
+                            return value + "%";
+                        }
+                    },
+
+                    grid: {
+                        color: line
+                    }
+                }
+            }
+        }
+    });
+
+  // Test type breakdown
+  const counts = KINDS.map(k => data.filter(d => d.type === k).length);
+  charts.types = new Chart($("types"), {type:"doughnut",
+    data:{labels:["Positive","Negative","Edge case"], datasets:[{data:counts, backgroundColor:[v("--pass"),v("--fail"),v("--a3")], borderColor:"transparent"}]},
+    options:{cutout:"68%", plugins:{legend:{position:"bottom",labels:{color:mute}}}}});
+  const ai = data.filter(d => d.src === "AI-generated").length;
+  $("chips").innerHTML = `<div class="chip"><b>${ai}</b><span>AI-generated</span></div><div class="chip"><b>${data.length - ai}</b><span>Rule-based</span></div>`;
+}
+
+function renderTimeline(){
+  if (!$("timeline")) return;
+  const rows = history.map(h => ({
+    id: h.run_id ?? h.id ?? "-",
+    date: new Date(h.timestamp || h.date || h.created_at),
+    dur: h.duration, total: h.total ?? 0, passed: h.passed ?? 0,
+    rate: h.pass_rate != null ? Math.round(h.pass_rate) : (h.total ? Math.round(h.passed/h.total*100) : 0)
+  }));
+  $("timeline").innerHTML = rows.map((r,i) => {
+    const prev = i ? rows[i-1].rate : null, d = prev == null ? null : r.rate - prev;
+    const delta = d == null ? "" : d > 0 ? `<span class="up">+${d}%</span>` : d < 0 ? `<span class="down">${d}%</span>` : `<span class="meta">no change</span>`;
+    const c = r.rate >= 80 ? "var(--pass)" : r.rate >= 50 ? "var(--a3)" : "var(--fail)";
+    return `<li style="--c:${c}"><div class="top"><span>Run #${r.id} &middot; ${r.rate}% ${delta}</span><span class="meta">${r.date.toLocaleString()}</span></div>
+      <div class="meta">${r.passed} of ${r.total} passed${r.dur!=null?" &middot; "+r.dur+" s":""}</div></li>`;
+  }).reverse().join("");
+}
+
+const REG_TABS = [["regressions","Regressions","var(--fail)"],["fixed","Fixed","var(--pass)"],["still_failing","Still failing","var(--a3)"]];
+function renderRegressions(){
+
+  if (!reg){
+
+    $("regPills").innerHTML = "";
+
+    $("regList").innerHTML = `
+      <div class="empty">
+        Regression data unavailable.
+        Run the tests at least twice to compare results.
+      </div>
+    `;
+
+    return;
+  }
+
+  $("regSub").textContent =
+    reg.current_run != null
+      ? "Run #" + reg.current_run + " compared with run #" + reg.previous_run
+      : "Latest run compared with the previous one";
+
+  const regressions = Array.isArray(reg.regressions)
+    ? reg.regressions
+    : [];
+
+  const fixed = Array.isArray(reg.fixed)
+    ? reg.fixed
+    : [];
+
+  const stillFailing = Array.isArray(reg.still_failing)
+    ? reg.still_failing
+    : [];
+
+  $("regPills").innerHTML = `
+    <button class="pill">
+      Regressions <b>${regressions.length}</b>
+    </button>
+
+    <button class="pill">
+      Fixed <b>${fixed.length}</b>
+    </button>
+
+    <button class="pill">
+      Still failing <b>${stillFailing.length}</b>
+    </button>
+  `;
+
+  let html = "";
+
+  if (
+    regressions.length === 0 &&
+    fixed.length === 0 &&
+    stillFailing.length === 0
+  ){
+
+    html = `
+      <div class="ok">
+        ✓ No regressions. Everything that passed last run still passes.
+      </div>
+    `;
+
+  } else {
+
+    if (regressions.length > 0){
+
+      html += `
+        <div class="analysis-issue">
+          <strong>⚠ ${regressions.length} Regression(s)</strong>
+          <p>
+            Tests that passed in the previous run are now failing.
+          </p>
+        </div>
+      `;
+
+      regressions.forEach(function(test){
+
+        html += `
+          <div class="ri">
+            <div class="t">
+              <i>${esc(test.method || "")}</i>
+              ${esc(test.endpoint || "")}
+            </div>
+
+            <div class="meta">
+              Previous: ${esc(test.prev_status)}
+              &nbsp; → &nbsp;
+              Latest: ${esc(test.status_code)}
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    if (fixed.length > 0){
+
+      html += `
+        <div class="analysis-success">
+          ✓ ${fixed.length} test(s) fixed since the previous run.
+        </div>
+      `;
+
+      fixed.forEach(function(test){
+
+        html += `
+          <div class="ri">
+            <div class="t">
+              <i>${esc(test.method || "")}</i>
+              ${esc(test.endpoint || "")}
+            </div>
+
+            <div class="meta">
+              Previous: ${esc(test.prev_status)}
+              &nbsp; → &nbsp;
+              Latest: ${esc(test.status_code)}
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    if (stillFailing.length > 0){
+
+      html += `
+        <div class="analysis-issue">
+          <strong>• ${stillFailing.length} test(s) still failing</strong>
+        </div>
+      `;
+
+      stillFailing.forEach(function(test){
+
+        html += `
+          <div class="ri">
+            <div class="t">
+              <i>${esc(test.method || "")}</i>
+              ${esc(test.endpoint || "")}
+            </div>
+
+            <div class="meta">
+              Previous: ${esc(test.prev_status)}
+              &nbsp; → &nbsp;
+              Latest: ${esc(test.status_code)}
+            </div>
+          </div>
+        `;
+      });
+    }
+  }
+
+  $("regList").innerHTML = html;
+}
+
+function escapeHTML(value){
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function renderAnalysis(a){
+  const box = $("analysis");
+
+  if (!box) return;
+
+  if (!a || a.available === false){
+    box.innerHTML = `
+      <div class="empty">
+        No AI analysis available yet.
+      </div>
+    `;
+    return;
+  }
+
+  const passed = a.passed || 0;
+  const failed = a.failed || 0;
+  const skipped = a.skipped || 0;
+  const passRate = a.pass_rate || 0;
+
+  const issues = Array.isArray(a.issues) ? a.issues : [];
+
+  let problemsHTML = "";
+
+  if (issues.length === 0){
+    problemsHTML = `
+      <div class="ok">
+        ✓ No problems were detected.
+      </div>
+    `;
+  } else {
+    problemsHTML = issues.map(function(issue){
+      return `
+        <div class="ri">
+          <div class="t">
+            <i>${esc(issue.method || "")}</i>
+            ${esc(issue.endpoint || issue.test || "")}
+          </div>
+
+          <div class="meta">
+            Expected: <b>${esc(issue.expected)}</b>
+            &nbsp; → &nbsp;
+            Actual: <b>${esc(issue.actual)}</b>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  /*
+     ai_analysis is the REAL response generated by Groq.
+     We are only displaying it here.
+  */
+  const aiText = a.ai_analysis || "No AI analysis available.";
+
+  box.innerHTML = `
+    <div class="ai-analysis">
+
+      <h3>Overall Result</h3>
+
+      <div class="analysis-stats">
+
+        <div>
+          <strong>${passed}</strong>
+          <span>Passed</span>
+        </div>
+
+        <div>
+          <strong>${failed}</strong>
+          <span>Failed</span>
+        </div>
+
+        <div>
+          <strong>${skipped}</strong>
+          <span>Skipped</span>
+        </div>
+
+        <div>
+          <strong>${passRate}%</strong>
+          <span>Pass Rate</span>
+        </div>
+
+      </div>
+
+      <h3>Problems Found</h3>
+
+      <div class="analysis-issues">
+        ${problemsHTML}
+      </div>
+
+      <h3>AI Analysis & Recommendations</h3>
+
+      <div class="analysis-summary">
+        ${esc(aiText).replace(/\n/g, "<br>")}
+      </div>
+
+    </div>
+  `;
+}
+
+$("q").addEventListener("input", renderTable);
+$("flt").addEventListener("change", renderTable);
+const STEPS = ["Parse API","Generate tests","Execute","AI analysis","Save report"];
+function paintPipe(i){
+  $("pipe").innerHTML = STEPS.map((t,k) => `<li class="${k<i?"done":k===i?"act":""}">${k<i?"Done: ":""}${t}</li>`).join("");
+}
+$("runBtn").addEventListener("click", async () => {
+  const btn = $("runBtn"); let i = 0;
+  btn.disabled = true; btn.textContent = "Running...";
+  $("pipe").hidden = false; paintPipe(0);
+  const timer = setInterval(() => { if(i < STEPS.length - 1) paintPipe(++i); }, 1800);
+  try{ await getJSON("/run", {method:"POST"}); clearInterval(timer); paintPipe(STEPS.length); await load(); }
+  catch(e){
+    clearInterval(timer);
+    $("banner").style.display = "block";
+    $("banner").textContent = "Could not start a run. Check that POST /run exists and the server is running.";
+  }
+  setTimeout(() => $("pipe").hidden = true, 2500);
+  btn.disabled = false; btn.textContent = "Run tests";
+});
+
+const esc = x => String(x).replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+$("rows").addEventListener("click", e => {
+  const tr = e.target.closest("tr"); if(!tr) return;
+  const d = data[tr.dataset.i]; if(!d) return;
+  const pre = o => `<pre>${esc(JSON.stringify(o, null, 2))}</pre>`;
+  $("dlg").innerHTML = `<h3>${d.method} ${esc(d.endpoint)} <span class="tag ${d.pass?"p":"f"}">${d.pass?"Passed":"Failed"}</span></h3>
+    <div class="row"><span>Status ${d.status}</span><span>${d.time!=null?d.time+" ms":"no timing"}</span><span>${d.type} test</span><span>${d.src}</span></div>
+    ${d.msg ? `<h4>Error</h4><div>${esc(d.msg)}</div>` : ""}
+    ${d.expl ? `<h4>AI analysis</h4><div>${esc(d.expl)}</div>` : ""}
+    ${d.req ? `<h4>Request</h4>${pre(d.req)}` : ""}${d.res ? `<h4>Response</h4>${pre(d.res)}` : ""}
+    <p style="text-align:right;margin:16px 0 0"><button id="dClose">Close</button></p>`;
+  $("dlg").showModal(); $("dClose").onclick = () => $("dlg").close();
+});
+$("dlg").addEventListener("click", e => { if(e.target === $("dlg")) $("dlg").close(); });
+
+$("expBtn").addEventListener("click", () => {
+  const rows = [["Method","Endpoint","Status","Time_ms","Result","Type","Source","Message"]]
+    .concat(data.map(d => [d.method,d.endpoint,d.status,d.time,d.pass?"Passed":"Failed",d.type,d.src,d.msg]));
+  const csv = rows.map(r => r.map(v => `"${String(v ?? "").replace(/"/g,'""')}"`).join(",")).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv"}));
+  a.download = "qa-report.csv"; a.click();
+});
+
+setTheme(saved);
+load();
+</script>
+</body>
+</html>
